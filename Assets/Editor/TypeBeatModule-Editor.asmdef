@@ -1,0 +1,10 @@
+{
+  "name": "TypeBeatModule-Editor",
+  "references": [
+    "TypeBeatModule"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}
