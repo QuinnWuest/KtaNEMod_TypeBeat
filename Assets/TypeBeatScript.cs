@@ -35,11 +35,11 @@ public class TypeBeatScript : MonoBehaviour
     private bool _switchFlipped;
     private Coroutine _switchAnimCoroutine;
 
-    private List<int> _inputList = new List<int>();
     private const float _y = 0.001f;
     private const float _pulsed = 0.0175f;
     private const float _size = 0.015f;
     private const float _time = 0.333f;
+    private int _currentIx = -1;
 
     private void Start()
     {
@@ -75,11 +75,10 @@ public class TypeBeatScript : MonoBehaviour
             ParentObjs[i].transform.localScale = new Vector3(0, _y, 0);
         }
 
-        Debug.LogFormat("[Type Beat #{0}] Chosen word: {1}.", _moduleId, _chosenWord);
-        Debug.LogFormat("[Type Beat #{0}] Display order: {1}.", _moduleId, _randomOrderA.Select(i => i + 1).Join(", "));
-        Debug.LogFormat("[Type Beat #{0}] Input order: {1}. ({2})", _moduleId, _randomOrderB.Select(i => i + 1).Join(", "), _randomOrderB.Select(i => _chosenWord[i]).Join(", "));
+        // Debug.LogFormat("[Type Beat #{0}] Chosen word: {1}.", _moduleId, _chosenWord);
+        // Debug.LogFormat("[Type Beat #{0}] Display order: {1}.", _moduleId, _randomOrderA.Select(i => i + 1).Join(", "));
+        // Debug.LogFormat("[Type Beat #{0}] Input order: {1}. ({2})", _moduleId, _randomOrderB.Select(i => i + 1).Join(", "), _randomOrderB.Select(i => _chosenWord[i]).Join(", "));
 
-        _inputList = new List<int>();
         StartCoroutine(PlayAnimation());
         return false;
     }
@@ -106,6 +105,8 @@ public class TypeBeatScript : MonoBehaviour
 
     private IEnumerator PlayAnimation()
     {
+        for (int i = 0; i < 8; i++)
+            ScreenTexts[_randomOrderB[i]].color = new Color(1, 1, 1, 1);
         Audio.PlaySoundAtTransform("Activation", transform);
         yield return new WaitForSeconds(0.65f);
         for (int i = 0; i < 8; i++)
@@ -119,7 +120,7 @@ public class TypeBeatScript : MonoBehaviour
             ScreenTexts[i].text = "?";
         for (int i = 0; i < 8; i++)
         {
-            _inputList.Add(_randomOrderB[i]);
+            _currentIx = _randomOrderB[i];
             var soFar = Enumerable.Range(0, i + 1).ToArray();
             for (int j = 0; j < soFar.Length; j++)
                 StartCoroutine(PulseIn(_randomOrderB[j]));
@@ -127,14 +128,17 @@ public class TypeBeatScript : MonoBehaviour
             for (int j = 0; j < soFar.Length; j++)
                 StartCoroutine(PulseIn(_randomOrderB[j]));
             yield return new WaitForSeconds(_time);
+            ScreenTexts[_randomOrderB[i]].color = new Color(0.7f, 0.7f, 0.7f, 1);
         }
         CheckAnswer();
         if (_moduleSolved)
             yield break;
         for (int i = 0; i < 8; i++)
+            ScreenTexts[_randomOrderB[i]].color = new Color(1, 0, 0, 1);
+        for (int i = 0; i < 8; i++)
             StartCoroutine(PulseOut(i));
         yield return new WaitForSeconds(0.4f);
-        _inputList = new List<int>();
+        _currentIx = -1;
         for (int i = 0; i < 8; i++)
             ScreenTexts[i].text = "";
         _isActivated = false;
@@ -197,14 +201,13 @@ public class TypeBeatScript : MonoBehaviour
 
     private void ProcessKey(KeyCode key)
     {
-        if (_inputList.Count == 0)
+        if (_currentInput[_currentIx] != "?")
             return;
         if (key >= KeyCode.A && key <= KeyCode.Z)
         {
             string k = key.ToString().ToUpperInvariant();
-            _currentInput[_inputList.First()] = k;
-            ScreenTexts[_inputList.First()].text = k;
-            _inputList.RemoveAt(0);
+            _currentInput[_currentIx] = k;
+            ScreenTexts[_currentIx].text = k;
         }
     }
 
